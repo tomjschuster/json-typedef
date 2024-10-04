@@ -716,7 +716,7 @@ fn type_variant(
     )
     |> list.sort(fn(a, b) { string.compare(a.0, b.0) })
     |> list.map(fn(p) {
-      let n = justin.snake_case(p.0)
+      let n = escape_reserved_word(justin.snake_case(p.0))
       "    " <> n <> ": " <> type_name(p.1, name <> justin.pascal_case(p.0))
     })
     |> string.join(",\n")
@@ -1097,7 +1097,7 @@ fn en_properties_schema(
     additional_properties: _,
   ) = schema
   let property_data = fn(field_name) {
-    let field_name = justin.snake_case(field_name)
+    let field_name = escape_reserved_word(justin.snake_case(field_name))
     case data {
       PropertyDataDirect -> field_name
       PropertyDataAccess(name) if !nullable -> name <> "." <> field_name
@@ -1255,7 +1255,7 @@ fn de_properties_schema(
   let params =
     properties
     |> list.map(fn(n) {
-      let name = justin.snake_case(n.0)
+      let name = escape_reserved_word(justin.snake_case(n.0))
       "    use " <> name <> " <- decode.parameter"
     })
     |> string.join("\n")
@@ -1273,7 +1273,7 @@ fn de_properties_schema(
 
   let keys =
     properties
-    |> list.map(fn(n) { justin.snake_case(n.0) <> ":" })
+    |> list.map(fn(n) { escape_reserved_word(justin.snake_case(n.0)) <> ":" })
     |> string.join(", ")
 
   let src = "decode.into({
@@ -1402,5 +1402,12 @@ fn de_nullable(src: String, type_name: String, nullable: Bool) -> Out {
       Out(src:, type_name:)
     }
     False -> Out(src:, type_name:)
+  }
+}
+
+fn escape_reserved_word(name: String) -> String {
+  case name {
+    "type" -> "type_"
+    name -> name
   }
 }
